@@ -66,7 +66,7 @@ export function ClusterDashboard() {
   const [minChildrenFilter, setMinChildrenFilter] = useState<string>("")
   const { toast } = useToast()
 
-  const API_BASE = "http://localhost:3001"
+  const API_BASE = "https://solana-cluster-4o5m.onrender.com"
 
   const fetchData = async () => {
     try {
