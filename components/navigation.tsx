@@ -19,7 +19,7 @@ export function Navigation() {
   const [password, setPassword] = useState("")
   const [solanaAddress, setSolanaAddress] = useState("")
   const [message, setMessage] = useState("")
-  const [mode, setMode] = useState<"login" | "signup" | null>(null) // which form is active
+  const [mode, setMode] = useState<"login" | "signup" | null>(null)
   const [walletDetected, setWalletDetected] = useState(false)
 
   // 🔹 Detect Solana wallet on mount
@@ -29,12 +29,22 @@ export function Navigation() {
     }
   }, [])
 
-  // 🔹 Check session on mount
+  // 🔹 Check session on mount and protect routes
   useEffect(() => {
     fetch("https://solana-cluster-monitor-1.onrender.com/me", { credentials: "include" })
-      .then((res) => res.ok ? setIsLoggedIn(true) : setIsLoggedIn(false))
-      .catch(() => setIsLoggedIn(false))
-  }, [])
+      .then((res) => {
+        if (res.ok) {
+          setIsLoggedIn(true)
+        } else {
+          setIsLoggedIn(false)
+          if (pathname === "/dashboard") router.push("/") // Redirect if on dashboard without login
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false)
+        if (pathname === "/dashboard") router.push("/") // Redirect on fetch fail
+      })
+  }, [pathname, router])
 
   const handleLogout = async () => {
     await fetch("https://solana-cluster-monitor-1.onrender.com/logout", {
@@ -49,10 +59,9 @@ export function Navigation() {
   // 🔹 Connect Solana Wallet
   const connectWallet = async () => {
     if ('solana' in window) {
-      const provider : any = window.solana
+      const provider: any = window.solana
       if (provider.isPhantom) {
         try {
-          // Try auto-connect if trusted, otherwise prompt
           const resp = await provider.connect({ onlyIfTrusted: true }).catch(() => provider.connect())
           setSolanaAddress(resp.publicKey.toString())
           setMessage(`✅ Connected wallet: ${resp.publicKey.toString().slice(0, 6)}...`)
@@ -99,7 +108,7 @@ export function Navigation() {
   }
 
   // 🔹 Handle Login
-  const handleLogin = async (e : any) => {
+  const handleLogin = async (e: any) => {
     e.preventDefault()
     if (!email && !solanaAddress) {
       setMessage('❌ Provide email or connect Solana wallet')
@@ -131,9 +140,7 @@ export function Navigation() {
 
   const navItems = [
     { name: "Home", href: "/", icon: Home, current: pathname === "/" },
-    ...(isLoggedIn
-      ? [{ name: "Dashboard", href: "/dashboard", icon: BarChart3, current: pathname === "/dashboard" }]
-      : []),
+    ...(isLoggedIn ? [{ name: "Dashboard", href: "/dashboard", icon: BarChart3, current: pathname === "/dashboard" }] : []),
   ]
 
   return (
