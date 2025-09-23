@@ -29,7 +29,7 @@ export function Navigation() {
     }
   }, [])
 
-  // 🔹 Check session on mount and protect routes
+  // 🔹 Check session on mount
   useEffect(() => {
     fetch("https://solana-cluster-monitor-1.onrender.com/me", { credentials: "include" })
       .then((res) => {
@@ -37,14 +37,10 @@ export function Navigation() {
           setIsLoggedIn(true)
         } else {
           setIsLoggedIn(false)
-          if (pathname === "/dashboard") router.push("/") // Redirect if on dashboard without login
         }
       })
-      .catch(() => {
-        setIsLoggedIn(false)
-        if (pathname === "/dashboard") router.push("/") // Redirect on fetch fail
-      })
-  }, [pathname, router])
+      .catch(() => setIsLoggedIn(false))
+  }, [])
 
   const handleLogout = async () => {
     await fetch("https://solana-cluster-monitor-1.onrender.com/logout", {
@@ -138,10 +134,26 @@ export function Navigation() {
     }
   }
 
+  // 🔹 Handle Dashboard Click (Prompt if not logged in)
+  const handleDashboardClick = () => {
+    if (!isLoggedIn) {
+      const choice = window.confirm("You need to log in or sign up to access the Dashboard. Would you like to log in?");
+      if (choice) {
+        setMode("login");
+      } else {
+        setMode("signup");
+      }
+      return;
+    }
+    router.push("/dashboard");
+  };
+
   const navItems = [
     { name: "Home", href: "/", icon: Home, current: pathname === "/" },
-    ...(isLoggedIn ? [{ name: "Dashboard", href: "/dashboard", icon: BarChart3, current: pathname === "/dashboard" }] : []),
-  ]
+    ...(isLoggedIn
+      ? [{ name: "Dashboard", href: "/dashboard", icon: BarChart3, current: pathname === "/dashboard" }]
+      : [{ name: "Dashboard", href: "#", onClick: handleDashboardClick, icon: BarChart3, current: false }]), // Disabled link with click handler
+  ];
 
   return (
     <>
@@ -175,16 +187,19 @@ export function Navigation() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 return (
-                  <Link key={item.name} href={item.href}>
+                  <div key={item.name} onClick={item.onClick || undefined}>
                     <Button
+                      asChild
                       variant={item.current ? "default" : "ghost"}
                       size="sm"
                       className={cn("flex items-center space-x-2", item.current && "bg-primary text-primary-foreground")}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
+                      <Link href={item.href}>
+                        <Icon className="h-4 w-4" />
+                        <span>{item.name}</span>
+                      </Link>
                     </Button>
-                  </Link>
+                  </div>
                 )
               })}
 
