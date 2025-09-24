@@ -1,15 +1,31 @@
+
+"use client"
+
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Navigation } from "@/components/navigation"
 import { TrendingUp, Activity, Shield, Zap, BarChart3, Users, Twitter, Linkedin, Github, Mail } from "lucide-react"
+import { useState } from "react"
 
 export default function HomePage() {
+  const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    if (!isLoggedIn) {
+      e.preventDefault()
+      alert("Please log in to access the dashboard.")
+      router.push("/#login")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <Navigation />
+      <Navigation setIsLoggedInState={setIsLoggedIn} />
 
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
@@ -28,7 +44,7 @@ export default function HomePage() {
             Solana blockchain monitoring.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard">
+            <Link href="/dashboard" onClick={handleDashboardClick}>
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300"
@@ -178,7 +194,7 @@ export default function HomePage() {
           <p className="text-lg text-muted-foreground mb-8">
             Join traders who use SolanaWatch to stay ahead of market movements
           </p>
-          <Link href="/dashboard">
+          <Link href="/dashboard" onClick={handleDashboardClick}>
             <Button
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-primary/25 transition-all duration-300"
@@ -224,7 +240,7 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="hover:text-primary transition-colors">
+                  <Link href="/dashboard" onClick={handleDashboardClick} className="hover:text-primary transition-colors">
                     Dashboard
                   </Link>
                 </li>
