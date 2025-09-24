@@ -32,7 +32,7 @@ export function Navigation({ setIsLoggedInState }: { setIsLoggedInState: (isLogg
 
   // 🔹 Check session on mount
   useEffect(() => {
-    fetch("http://localhost:3001/me", { credentials: "include" })
+    fetch("https://solana-cluster-monitor-1.onrender.com/me", { credentials: "include" })
       .then((res) => {
         const loggedIn = res.ok
         setIsLoggedIn(loggedIn)
@@ -45,7 +45,7 @@ export function Navigation({ setIsLoggedInState }: { setIsLoggedInState: (isLogg
   }, [setIsLoggedInState])
 
   const handleLogout = async () => {
-    await fetch("http://localhost:3001/logout", {
+    await fetch("https://solana-cluster-monitor-1.onrender.com/logout", {
       method: "POST",
       credentials: "include"
     })
@@ -88,7 +88,7 @@ export function Navigation({ setIsLoggedInState }: { setIsLoggedInState: (isLogg
       return
     }
     try {
-      const res = await fetch("http://localhost:3001/signup", {
+      const res = await fetch("https://solana-cluster-monitor-1.onrender.com/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -120,7 +120,7 @@ export function Navigation({ setIsLoggedInState }: { setIsLoggedInState: (isLogg
       return
     }
     try {
-      const res = await fetch("http://localhost:3001/login", {
+      const res = await fetch("https://solana-cluster-monitor-1.onrender.com/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
