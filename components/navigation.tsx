@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -8,7 +9,7 @@ import { BarChart3, Home, Menu, X, LogIn, LogOut, UserPlus } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
-export function Navigation() {
+export function Navigation({ setIsLoggedInState }: { setIsLoggedInState: (isLoggedIn: boolean) => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -19,7 +20,7 @@ export function Navigation() {
   const [password, setPassword] = useState("")
   const [solanaAddress, setSolanaAddress] = useState("")
   const [message, setMessage] = useState("")
-  const [mode, setMode] = useState<"login" | "signup" | null>(null)
+  const [mode, setMode] = useState<"login" | "signup" | null>(null) // which form is active
   const [walletDetected, setWalletDetected] = useState(false)
 
   // 🔹 Detect Solana wallet on mount
@@ -31,23 +32,25 @@ export function Navigation() {
 
   // 🔹 Check session on mount
   useEffect(() => {
-    fetch("https://solana-cluster-monitor-1.onrender.com/me", { credentials: "include" })
+    fetch("http://localhost:3001/me", { credentials: "include" })
       .then((res) => {
-        if (res.ok) {
-          setIsLoggedIn(true)
-        } else {
-          setIsLoggedIn(false)
-        }
+        const loggedIn = res.ok
+        setIsLoggedIn(loggedIn)
+        setIsLoggedInState(loggedIn) // Update parent state
       })
-      .catch(() => setIsLoggedIn(false))
-  }, [])
+      .catch(() => {
+        setIsLoggedIn(false)
+        setIsLoggedInState(false)
+      })
+  }, [setIsLoggedInState])
 
   const handleLogout = async () => {
-    await fetch("https://solana-cluster-monitor-1.onrender.com/logout", {
+    await fetch("http://localhost:3001/logout", {
       method: "POST",
       credentials: "include"
     })
     setIsLoggedIn(false)
+    setIsLoggedInState(false)
     setMode(null)
     router.push("/")
   }
@@ -55,9 +58,10 @@ export function Navigation() {
   // 🔹 Connect Solana Wallet
   const connectWallet = async () => {
     if ('solana' in window) {
-      const provider: any = window.solana
+      const provider : any = window.solana
       if (provider.isPhantom) {
         try {
+          // Try auto-connect if trusted, otherwise prompt
           const resp = await provider.connect({ onlyIfTrusted: true }).catch(() => provider.connect())
           setSolanaAddress(resp.publicKey.toString())
           setMessage(`✅ Connected wallet: ${resp.publicKey.toString().slice(0, 6)}...`)
@@ -84,7 +88,7 @@ export function Navigation() {
       return
     }
     try {
-      const res = await fetch("https://solana-cluster-monitor-1.onrender.com/signup", {
+      const res = await fetch("http://localhost:3001/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -94,6 +98,7 @@ export function Navigation() {
       if (res.ok) {
         setMessage(`✅ Signed up as ${data.user.email || data.user.solana_address}`)
         setIsLoggedIn(true)
+        setIsLoggedInState(true)
         setMode(null)
       } else {
         setMessage(`❌ ${data.error}`)
@@ -104,7 +109,7 @@ export function Navigation() {
   }
 
   // 🔹 Handle Login
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e : any) => {
     e.preventDefault()
     if (!email && !solanaAddress) {
       setMessage('❌ Provide email or connect Solana wallet')
@@ -115,7 +120,7 @@ export function Navigation() {
       return
     }
     try {
-      const res = await fetch("https://solana-cluster-monitor-1.onrender.com/login", {
+      const res = await fetch("http://localhost:3001/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -125,6 +130,7 @@ export function Navigation() {
       if (res.ok) {
         setMessage(`✅ Logged in as ${data.user.email || data.user.solana_address}`)
         setIsLoggedIn(true)
+        setIsLoggedInState(true)
         setMode(null)
       } else {
         setMessage(`❌ ${data.error}`)
@@ -134,26 +140,12 @@ export function Navigation() {
     }
   }
 
-  // 🔹 Handle Dashboard Click (Prompt if not logged in)
-  const handleDashboardClick = () => {
-    if (!isLoggedIn) {
-      const choice = window.confirm("You need to log in or sign up to access the Dashboard. Would you like to log in?");
-      if (choice) {
-        setMode("login");
-      } else {
-        setMode("signup");
-      }
-      return;
-    }
-    router.push("/dashboard");
-  };
-
   const navItems = [
     { name: "Home", href: "/", icon: Home, current: pathname === "/" },
     ...(isLoggedIn
       ? [{ name: "Dashboard", href: "/dashboard", icon: BarChart3, current: pathname === "/dashboard" }]
-      : [{ name: "Dashboard", href: "#", onClick: handleDashboardClick, icon: BarChart3, current: false }]), // Disabled link with click handler
-  ];
+      : []),
+  ]
 
   return (
     <>
@@ -187,19 +179,16 @@ export function Navigation() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 return (
-                  <div key={item.name} onClick={item.onClick || undefined}>
+                  <Link key={item.name} href={item.href}>
                     <Button
-                      asChild
                       variant={item.current ? "default" : "ghost"}
                       size="sm"
                       className={cn("flex items-center space-x-2", item.current && "bg-primary text-primary-foreground")}
                     >
-                      <Link href={item.href}>
-                        <Icon className="h-4 w-4" />
-                        <span>{item.name}</span>
-                      </Link>
+                      <Icon className="h-4 w-4" />
+                      <span>{item.name}</span>
                     </Button>
-                  </div>
+                  </Link>
                 )
               })}
 
